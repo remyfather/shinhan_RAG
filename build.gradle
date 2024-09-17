@@ -26,12 +26,31 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	implementation 'org.apache.pdfbox:pdfbox:2.0.27' // PDFBox 라이브러리 추가
+
+	implementation 'com.mysql:mysql-connector-j'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	// JUnit
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// Mockito
+	testImplementation 'org.mockito:mockito-core:5.4.0' // 최신 버전 사용
+
+	// PDFBox (테스트에 필요할 경우)
+	testImplementation 'org.apache.pdfbox:pdfbox:2.0.27'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+
+
+
 }
 
 tasks.named('test') {
