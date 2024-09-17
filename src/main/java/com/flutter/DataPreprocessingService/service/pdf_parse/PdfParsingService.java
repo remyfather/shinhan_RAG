@@ -1,4 +1,4 @@
-package com.flutter.DataPreprocessingService.service;
+package com.flutter.DataPreprocessingService.service.pdf_parse;
 
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -75,7 +75,7 @@ public class PdfParsingService {
         return chunkedFiles;
     }
 
-    public boolean analyzeDocumentWithUpstage(String filePath) {
+    public Map<String, Object> analyzeDocumentWithUpstage(String filePath) {
         RestTemplate restTemplate = new RestTemplate();
         String url = "https://api.upstage.ai/v1/document-ai/document-parse";
 
@@ -92,10 +92,18 @@ public class PdfParsingService {
 
         if (response.getStatusCode() == HttpStatus.OK) {
             logger.info("Upstage API 호출 성공: " + response.getBody());
-            return true;
+
+            // 응답 데이터에서 필요한 필드를 추출하여 반환
+            Map<String, Object> responseBody = response.getBody();
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", responseBody.get("status"));
+            result.put("elements", responseBody.get("elements"));
+            // 필요한 데이터 더 추출...
+
+            return result;
         } else {
             logger.error("Upstage API 호출 실패: " + response.getStatusCode());
-            return false;
+            return Collections.emptyMap(); // 빈 맵 반환
         }
     }
 }
