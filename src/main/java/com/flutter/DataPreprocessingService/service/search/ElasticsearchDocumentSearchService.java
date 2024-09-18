@@ -3,7 +3,6 @@ package com.flutter.DataPreprocessingService.service.search;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flutter.DataPreprocessingService.repository.search.DocumentSearchRepository;
@@ -29,7 +28,7 @@ public class ElasticsearchDocumentSearchService implements DocumentSearchReposit
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchDocumentSearchService.class);
 
     private final ElasticsearchClient elasticsearchClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();  // ObjectMapper 추가
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${spring.elasticsearch.index-name}")
     private String indexName;
@@ -38,19 +37,17 @@ public class ElasticsearchDocumentSearchService implements DocumentSearchReposit
     public List<Map<String, Object>> searchDocumentsByKeyword(String query) {
         try {
             // 각 필드에 대한 검색 조건을 설정합니다.
-            Query htmlQuery = Query.of(m -> m.match(t -> t.field("content.html").query(query)));
-            Query markDownQuery = Query.of(m -> m.match(t -> t.field("content.markdown").query(query)));
-            Query textQuery = Query.of(m -> m.match(t -> t.field("content.text").query(query)));
-            Query productNameQuery = Query.of(m -> m.match(t -> t.field("productName").query(query)));
-            Query categoryQuery = Query.of(m -> m.match(t -> t.field("category").query(query)));
+            Query chunkQuery = Query.of(m -> m.match(t -> t.field("chunk").query(query)));
             Query fileNameQuery = Query.of(m -> m.match(t -> t.field("fileName").query(query)));
+            Query productNameQuery = Query.of(m -> m.match(t -> t.field("productName").query(query)));
+            Query channelQuery = Query.of(m -> m.match(t -> t.field("channel").query(query)));
 
             // Elasticsearch 검색 쿼리 구성
             SearchResponse<ObjectNode> response = elasticsearchClient.search(s -> s
                             .index(indexName)
                             .query(q -> q
                                     .bool(b -> b
-                                            .should(List.of(htmlQuery, markDownQuery, textQuery, productNameQuery, categoryQuery, fileNameQuery)) // 각 Query 객체를 리스트로 전달
+                                            .should(List.of(chunkQuery, fileNameQuery, productNameQuery, channelQuery)) // 검색 대상 필드를 업데이트
                                     )
                             ),
                     ObjectNode.class  // ObjectNode 클래스로 반환 타입 지정
@@ -75,12 +72,10 @@ public class ElasticsearchDocumentSearchService implements DocumentSearchReposit
     public List<Map<String, Object>> searchDocumentsTopKByKeyword(String query, int topK) {
         try {
             // 각 필드에 대한 검색 조건을 설정합니다.
-            Query htmlQuery = Query.of(m -> m.match(t -> t.field("content.html").query(query)));
-            Query markDownQuery = Query.of(m -> m.match(t -> t.field("content.markdown").query(query)));
-            Query textQuery = Query.of(m -> m.match(t -> t.field("content.text").query(query)));
-            Query productNameQuery = Query.of(m -> m.match(t -> t.field("productName").query(query)));
-            Query categoryQuery = Query.of(m -> m.match(t -> t.field("category").query(query)));
+            Query chunkQuery = Query.of(m -> m.match(t -> t.field("chunk").query(query)));
             Query fileNameQuery = Query.of(m -> m.match(t -> t.field("fileName").query(query)));
+            Query productNameQuery = Query.of(m -> m.match(t -> t.field("productName").query(query)));
+            Query channelQuery = Query.of(m -> m.match(t -> t.field("channel").query(query)));
 
             // Elasticsearch 검색 쿼리 구성
             SearchResponse<ObjectNode> response = elasticsearchClient.search(s -> s
@@ -88,7 +83,7 @@ public class ElasticsearchDocumentSearchService implements DocumentSearchReposit
                             .size(topK)  // 상위 K개 문서만 검색
                             .query(q -> q
                                     .bool(b -> b
-                                            .should(List.of(htmlQuery, markDownQuery, textQuery, productNameQuery, categoryQuery, fileNameQuery)) // 각 Query 객체를 리스트로 전달
+                                            .should(List.of(chunkQuery, fileNameQuery, productNameQuery, channelQuery)) // 검색 대상 필드를 업데이트
                                     )
                             ),
                     ObjectNode.class  // ObjectNode 클래스로 반환 타입 지정

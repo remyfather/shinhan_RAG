@@ -30,13 +30,13 @@ public class CreatePrompt {
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
-     * LLM API를 호출하여 대화 응답을 생성합니다.
+     * LLM API를 호출하여 대화 응답을 생성하고 요청 쿼리, 본문, LLM 응답을 모두 포함한 결과를 반환한다.
      *
      * @param query 사용자 쿼리
      * @param top5Documents 상위 5개의 리랭킹된 문서
-     * @return LLM API 응답
+     * @return LLM API 응답과 요청 쿼리, 본문을 함께 포함한 결과
      */
-    public String generateResponse(String query, List<Map<String, Object>> top5Documents) {
+    public Map<String, Object> generateResponse(String query, List<Map<String, Object>> top5Documents) {
         String endpoint = upstageApiUrl + "/v1/solar/chat/completions";
         try {
             // HTTP 요청 헤더 설정
@@ -47,7 +47,7 @@ public class CreatePrompt {
             // 문서 컨텍스트 생성
             StringBuilder contextBuilder = new StringBuilder();
             for (Map<String, Object> doc : top5Documents) {
-                contextBuilder.append(doc.get("content")).append(" ");
+                contextBuilder.append(doc.get("chunk")).append(" ");  // chunk 필드를 사용하여 컨텍스트 생성
             }
             String context = contextBuilder.toString().trim();
 
@@ -55,7 +55,7 @@ public class CreatePrompt {
             Map<String, Object> requestBody = Map.of(
                     "model", "solar-1-mini-chat",  // 모델 설정
                     "messages", List.of(
-                            Map.of("role", "system", "content", "당신은 사용자의 질문에 대해 제공된 청크 데이터에 기반하여 답변하는 LLM입니다. 주어진 청크 데이터 외의 내용을 답변에 포함하지 마세요. 만약 질문에 대한 답변을 제공할 수 없다면, '제공된 데이터에서는 답변을 찾을 수 없습니다'라고 말하세요."),
+                            Map.of("role", "system", "content", "당신은 사용자의 질문에 대해 제공된 청크 데이터에 기반하여 답변하는 LLM입니다. 주어진 청크 데이터 외의 내용을 답변에 포함하지 마세요. 만약 질문에 대한 답변을 제공할 수 없다면, '제공된 데이터에서는 답변을 찾을 수 없습니다'라고 말하시고 최대한 상세히 답변해주세요."),
                             Map.of("role", "user", "content", "Context: " + context + ". Question: " + query)
                     ),
                     "stream", false
@@ -66,12 +66,12 @@ public class CreatePrompt {
             // API 호출
             ResponseEntity<Map> response = restTemplate.postForEntity(endpoint, entity, Map.class);
 
-            // LLM 응답 반환
-            if (response.getBody() != null) {
-                return response.getBody().toString();
-            } else {
-                throw new IllegalStateException("LLM 응답이 비어 있습니다.");
-            }
+            // 결과 반환: 요청 쿼리, 본문, LLM 응답을 모두 포함
+            Map<String, Object> result = new HashMap<>();
+            result.put("llmResponse", response.getBody());
+
+            logger.info("LLM 응답 생성 성공: {}", result);
+            return result;
 
         } catch (Exception e) {
             logger.error("LLM 응답 생성 중 오류 발생: ", e);
