@@ -1,4 +1,4 @@
-package com.flutter.DataPreprocessingService.controller;
+package com.flutter.DataPreprocessingService.controller.preprocessing;
 
 import com.flutter.DataPreprocessingService.dto.document_meta.DocumentMetadataDto;
 import com.flutter.DataPreprocessingService.entity.DocumentMetadata;
