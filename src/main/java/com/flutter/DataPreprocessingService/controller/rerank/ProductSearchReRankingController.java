@@ -4,6 +4,7 @@ import com.flutter.DataPreprocessingService.service.embedding.EmbeddingService;
 import com.flutter.DataPreprocessingService.service.prompt.CreatePrompt;
 import com.flutter.DataPreprocessingService.service.prompt.StreamingPromptService;
 import com.flutter.DataPreprocessingService.service.search.ElasticsearchDocumentSearchService;
+import com.flutter.DataPreprocessingService.service.search.ElasticsearchProductSearchService;
 import com.flutter.DataPreprocessingService.service.similarity.SimilarityService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -15,24 +16,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * 리랭킹 API 컨트롤러.
  */
 @RestController
-@RequestMapping("/api/rerank")
+@RequestMapping("/api/product")
 @RequiredArgsConstructor
-public class ReRankingController {
+public class ProductSearchReRankingController {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReRankingController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProductSearchReRankingController.class);
 
     private final ElasticsearchDocumentSearchService searchService;
     private final SimilarityService similarityService;
     private final EmbeddingService embeddingService;
     private final CreatePrompt createPrompt;
-    private final StreamingPromptService streamingPromptService;
+    private final ElasticsearchProductSearchService elasticsearchProductSearchService;
 
     /**
      * 리랭킹된 문서 검색 결과를 반환하고 LLM API를 호출하여 응답을 받습니다.
@@ -41,7 +45,7 @@ public class ReRankingController {
      * @return 리랭킹된 문서 목록과 LLM API 응답
      */
     @GetMapping("/top-k")
-    public ResponseEntity<Map<String, Object>> getReRankedResults(@RequestParam("query") String query) {
+    public ResponseEntity<Map<String, Object>> getReRankedResults(@RequestParam("query") String query, @RequestParam("productName") String productName) {
         // 입력 유효성 검사
         if (query == null || query.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Collections.emptyMap());
@@ -49,7 +53,7 @@ public class ReRankingController {
 
         try {
             // 1차 검색 수행
-            List<Map<String, Object>> topKDocuments = searchService.searchDocumentsTopKByKeyword(query, 20);
+            List<Map<String, Object>> topKDocuments = elasticsearchProductSearchService.searchDocumentsByProductName(query, productName);
             for (int i=0; i<topKDocuments.size();i++){
                 logger.info("{} 번째 결과: {}",i+1, topKDocuments.get(i));
 

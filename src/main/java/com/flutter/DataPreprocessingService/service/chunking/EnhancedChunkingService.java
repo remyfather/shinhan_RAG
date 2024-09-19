@@ -70,6 +70,42 @@ public class EnhancedChunkingService {
         }
     }
 
+    public void processChunkingAndIndexing2(DocumentMetadata documentMetadata) {
+        // 전달된 단일 문서에 대해 청킹 수행
+        try {
+            logger.info("문서 청킹 시작: {}", documentMetadata.getFilePath());
+            List<File> chunkedFiles = pdfParsingService.chunkPdf(documentMetadata.getFilePath(), 90);
+
+            for (File chunk : chunkedFiles) {
+                Map<String, Object> parsedResult = pdfParsingService.analyzeDocumentWithUpstage(chunk.getAbsolutePath());
+
+                if (parsedResult != null && !parsedResult.isEmpty()) {
+                    logger.info("문서 파싱 완료, Elasticsearch에 저장 시작");
+                    List<Map<String, Object>> chunks = createChunksWithOverlap((List<Map<String, Object>>) parsedResult.get("elements"));
+                    saveChunksToElasticsearch(chunks, documentMetadata);
+
+                    if (chunk.delete()) {
+                        logger.info("청크 파일 삭제 성공: {}", chunk.getAbsolutePath());
+                    } else {
+                        logger.error("청크 파일 삭제 실패: {}", chunk.getAbsolutePath());
+                    }
+                } else {
+                    logger.error("API 호출 실패로 인해 청크 파일을 삭제하지 않음: {}", chunk.getAbsolutePath());
+                }
+            }
+
+            // 청킹 상태를 완료로 업데이트
+            documentMetadata.setChunkingStatus(DocumentMetadata.ChunkingStatus.COMPLETED);
+            documentMetadataRepository.save(documentMetadata);
+            logger.info("문서 청킹 및 인덱싱 완료: {}", documentMetadata.getFilePath());
+
+        } catch (IOException e) {
+            logger.error("문서 청킹 및 인덱싱 실패: {}", documentMetadata.getFilePath(), e);
+        }
+    }
+
+
+
     public List<Map<String, Object>> createChunksWithOverlap(List<Map<String, Object>> elements) {
         List<Map<String, Object>> chunks = new ArrayList<>();
         StringBuilder currentChunk = new StringBuilder();

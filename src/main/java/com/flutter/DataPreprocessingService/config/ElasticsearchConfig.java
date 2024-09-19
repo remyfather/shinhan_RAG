@@ -30,6 +30,9 @@ public class ElasticsearchConfig {
     @Value("${spring.elasticsearch.password}")
     private String password;
 
+    @Value("${spring.elasticsearch.uris}")
+    private String elasticSearchUris;
+
     @Bean
     public ElasticsearchClient elasticsearchClient() throws Exception {
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
@@ -39,7 +42,7 @@ public class ElasticsearchConfig {
         SSLContext sslContext = createSSLContext();
 
         // 여기에서 프로토콜을 http로 변경합니다
-        RestClientBuilder builder = RestClient.builder(new HttpHost("localhost", 9200, "http")) // 수정된 부분
+        RestClientBuilder builder = RestClient.builder(new HttpHost(elasticSearchUris, 9200, "http")) // 수정된 부분
                 .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
                         .setDefaultCredentialsProvider(credentialsProvider)
                         // HTTPS를 사용하지 않으므로 SSL 설정은 필요 없을 수 있습니다

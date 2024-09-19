@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,24 +32,29 @@ public class ReRankingController {
     private final StreamingPromptService streamingPromptService;
 
     /**
-     * 리랭킹된 문서 검색 결과를 반환하고 LLM API를 호출하여 응답을 받습니다.
+     * GET 요청을 처리하여 리랭킹된 문서 검색 결과와 LLM API 응답을 반환합니다.
      *
      * @param query 검색 쿼리
      * @return 리랭킹된 문서 목록과 LLM API 응답
      */
     @GetMapping("/top-k")
     public ResponseEntity<Map<String, Object>> getReRankedResults(@RequestParam("query") String query) {
-        // 입력 유효성 검사
-        if (query == null || query.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Collections.emptyMap());
-        }
+        return processReRanking(query);
+    }
 
+
+    /**
+     * 리랭킹 로직을 수행하고 결과를 반환하는 메서드
+     *
+     * @param query 검색 쿼리
+     * @return 리랭킹된 문서 목록과 LLM API 응답
+     */
+    private ResponseEntity<Map<String, Object>> processReRanking(String query) {
         try {
             // 1차 검색 수행
             List<Map<String, Object>> topKDocuments = searchService.searchDocumentsTopKByKeyword(query, 20);
-            for (int i=0; i<topKDocuments.size();i++){
-                logger.info("{} 번째 결과: {}",i+1, topKDocuments.get(i));
-
+            for (int i = 0; i < topKDocuments.size(); i++) {
+                logger.info("{} 번째 결과: {}", i + 1, topKDocuments.get(i));
             }
 
             // 쿼리 임베딩 생성

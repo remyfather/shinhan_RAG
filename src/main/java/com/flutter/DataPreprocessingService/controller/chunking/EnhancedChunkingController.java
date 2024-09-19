@@ -25,7 +25,7 @@ public class EnhancedChunkingController {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid document ID: " + documentId));
 
         // 해당 문서에 대해 청킹 및 인덱싱 처리
-        chunkingService.processChunkingAndIndexing(documentMetadata);
+        chunkingService.processChunkingAndIndexing2(documentMetadata);
 
         return ResponseEntity.ok("문서 청킹 및 인덱싱이 완료되었습니다.");
     }
