@@ -55,7 +55,7 @@ public class CreatePrompt {
             Map<String, Object> requestBody = Map.of(
                     "model", "solar-1-mini-chat",  // 모델 설정
                     "messages", List.of(
-                            Map.of("role", "system", "content", "당신은 사용자의 질문에 대해 제공된 청크 데이터에 기반하여 답변하는 LLM입니다. 주어진 청크 데이터 외의 내용을 답변에 포함하지 마세요. 만약 질문에 대한 답변을 제공할 수 없다면, '제공된 데이터에서는 답변을 찾을 수 없습니다'라고 말하시고 최대한 상세히 답변해주세요."),
+                            Map.of("role", "system", "content", "당신은 사용자의 질문에 대해 제공된 청크 데이터에 기반하여 답변하는 LLM입니다. 주어진 청크 데이터 외의 내용을 답변에 포함하지 마세요. 그리고 제공된 청크 데이터를 최대한 활용해서 자세한 답변을 제공해주세요"),
                             Map.of("role", "user", "content", "Context: " + context + ". Question: " + query)
                     ),
                     "stream", false

@@ -3,6 +3,8 @@ package com.flutter.DataPreprocessingService.repository.document_meta;
 import com.flutter.DataPreprocessingService.entity.DocumentMetadata;
 import com.flutter.DataPreprocessingService.entity.DocumentMetadata.ChunkingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.List;
 
 public interface DocumentMetadataRepository extends JpaRepository<DocumentMetadata, Long> {
@@ -21,4 +23,8 @@ public interface DocumentMetadataRepository extends JpaRepository<DocumentMetada
      * @return 청킹 완료되지 않은 문서 목록
      */
     List<DocumentMetadata> findByChunkingStatusNot(ChunkingStatus chunkingStatus);
+
+
+    @Query("SELECT DISTINCT dm.productName FROM DocumentMetadata dm")
+    List<String> findDistinctProductNames();
 }

@@ -122,4 +122,42 @@ public class ReRankingController {
             return decodedDoc;
         }).collect(Collectors.toList());
     }
+
+    /**
+     * 1차 검색 수행 후, LLM API 호출하여 응답을 반환하는 메서드
+     *
+     * @param query 검색 쿼리
+     * @return LLM API 응답 및 검색된 문서 목록
+     */
+    @GetMapping("/simple-search")
+    public ResponseEntity<Map<String, Object>> simpleSearch(@RequestParam("query") String query) {
+        try {
+            // 1차 검색 수행 (15개의 문서)
+            List<Map<String, Object>> documents = searchService.searchDocumentsTopKByKeyword(query, 15);
+            for (int i = 0; i < documents.size(); i++) {
+                logger.info("{} 번째 결과: {}", i + 1, documents.get(i));
+            }
+
+            // 검색된 문서에서 원본 데이터 추출
+            List<Map<String, Object>> decodedDocuments = decodeDocuments(documents);
+
+            // LLM API 호출
+            Map<String, Object> llmResponseMap = createPrompt.generateResponse(query, decodedDocuments);
+            String llmResponse = llmResponseMap.toString();  // Map을 String으로 변환
+
+            // 응답 결과 생성
+            Map<String, Object> result = new HashMap<>();
+            result.put("query", query);
+            result.put("llmResponse", llmResponse);
+            result.put("contents", decodedDocuments);
+
+            // 응답 반환
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            logger.error("검색 처리 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", e.getMessage()));
+        }
+    }
+
 }

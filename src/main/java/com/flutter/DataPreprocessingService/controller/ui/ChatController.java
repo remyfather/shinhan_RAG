@@ -10,4 +10,9 @@ public class ChatController {
     public String getChatPage() {
         return "chat";  // chat.html 파일을 반환
     }
+
+    @GetMapping("/enhancedChat")
+    public String getEnhancedChatPage() {
+        return "enhancedChat";  // chat.html 파일을 반환
+    }
 }

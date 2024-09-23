@@ -103,4 +103,49 @@ public class ElasticsearchDocumentSearchService implements DocumentSearchReposit
             return Collections.emptyList();
         }
     }
+
+    /**
+     * query와 productName을 기반으로 문서를 검색합니다.
+     *
+     * @param query       검색어
+     * @param productName 상품명
+     * @param topK        상위 K개의 문서
+     * @return 검색된 문서 목록
+     */
+    @Override
+    public List<Map<String, Object>> searchDocumentsByQueryAndProductName(String query, String productName, int topK) {
+        try {
+            // 검색 조건 설정
+            Query chunkQuery = Query.of(m -> m.match(t -> t.field("chunk").query(query)));
+            Query fileNameQuery = Query.of(m -> m.match(t -> t.field("fileName").query(query)));
+            Query productNameQuery = Query.of(m -> m.match(t -> t.field("productName").query(productName))); // 상품명 필터 추가
+            Query channelQuery = Query.of(m -> m.match(t -> t.field("channel").query(query)));
+
+            // Elasticsearch 검색 쿼리 구성
+            SearchResponse<ObjectNode> response = elasticsearchClient.search(s -> s
+                            .index(indexName)
+                            .query(q -> q
+                                    .bool(b -> b
+                                            .must(productNameQuery)  // productName 필터 적용
+                                            .should(List.of(chunkQuery, fileNameQuery, channelQuery)) // 다른 필드에 대한 검색
+                                    )
+                            )
+                            .size(topK),  // 상위 K개의 결과 반환
+                    ObjectNode.class  // ObjectNode 클래스로 반환 타입 지정
+            );
+
+            // 검색 결과 반환
+            List<Map<String, Object>> searchResults = response.hits().hits().stream()
+                    .map(hit -> objectMapper.convertValue(hit.source(), Map.class))  // ObjectNode를 Map<String, Object>으로 변환
+                    .map(map -> (Map<String, Object>) map)  // 명시적으로 Map<String, Object> 타입으로 캐스팅
+                    .collect(Collectors.toList());
+
+            logger.info("Elasticsearch에서 {}개의 검색 결과를 찾았습니다.", searchResults.size());
+            return searchResults;
+
+        } catch (IOException e) {
+            logger.error("Elasticsearch 검색 중 오류 발생: ", e);
+            return List.of(); // 오류 발생 시 빈 리스트 반환
+        }
+    }
 }

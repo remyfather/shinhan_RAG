@@ -25,4 +25,7 @@ public interface DocumentSearchRepository {
      * @return 검색된 문서 목록
      */
     List<Map<String, Object>> searchDocumentsTopKByKeyword(String query, int topK);
+
+
+    List<Map<String, Object>> searchDocumentsByQueryAndProductName(String query, String productName, int topK);
 }

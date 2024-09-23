@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced 챗봇 UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .chat-container {
+            width: 400px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .chat-box {
+            border: 1px solid #ddd;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-message { margin-bottom: 10px; }
+        .chat-input { width: 90%; padding: 10px; }
+        .chat-input button { margin-top: 5px; }
+        select { width: 100%; padding: 5px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div id="chat-box" class="chat-box"></div>
+    <select id="productName"></select>
+    <input type="text" id="query" class="chat-input" placeholder="질문을 입력하세요...">
+    <button onclick="sendMessage()">보내기</button>
+</div>
+
+<script>
+    // 상품명을 불러오는 함수
+    function loadProductNames() {
+        fetch('/api/product-names')
+            .then(response => response.json())
+            .then(data => {
+                const productNameSelect = document.getElementById('productName');
+                data.forEach(productName => {
+                    const option = document.createElement('option');
+                    option.value = productName;
+                    option.textContent = productName;
+                    productNameSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('상품명을 불러오는 중 오류 발생:', error);
+            });
+    }
+
+    // 메시지를 보내는 함수
+    function sendMessage() {
+        const query = document.getElementById('query').value;
+        const productName = document.getElementById('productName').value;
+
+        if (!query || !productName) return;
+
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML += `<div class="chat-message"><strong>나:</strong> ${query} (상품명: ${productName})</div>`;
+
+        // 서버로 쿼리와 productName 전송
+        fetch(`/api/enhanced-search/reranked-search?query=${encodeURIComponent(query)}&productName=${encodeURIComponent(productName)}`)
+            .then(response => response.json())
+            .then(data => {
+                const botResponse = data.llmResponse ? data.llmResponse : "응답이 없습니다.";
+                chatBox.innerHTML += `<div class="chat-message"><strong>봇:</strong> ${botResponse}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight; // 채팅 창 자동 스크롤
+            })
+            .catch(error => {
+                chatBox.innerHTML += `<div class="chat-message"><strong>오류:</strong> 응답을 가져오지 못했습니다.</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight; // 채팅 창 자동 스크롤
+            });
+    }
+
+    // 페이지 로드 시 상품명 목록 불러오기
+    window.onload = loadProductNames;
+</script>
+</body>
+</html>

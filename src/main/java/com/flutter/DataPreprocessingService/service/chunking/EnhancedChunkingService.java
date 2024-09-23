@@ -74,7 +74,7 @@ public class EnhancedChunkingService {
         // 전달된 단일 문서에 대해 청킹 수행
         try {
             logger.info("문서 청킹 시작: {}", documentMetadata.getFilePath());
-            List<File> chunkedFiles = pdfParsingService.chunkPdf(documentMetadata.getFilePath(), 90);
+            List<File> chunkedFiles = pdfParsingService.chunkPdf(documentMetadata.getFilePath(), 15);
 
             for (File chunk : chunkedFiles) {
                 Map<String, Object> parsedResult = pdfParsingService.analyzeDocumentWithUpstage(chunk.getAbsolutePath());
@@ -157,9 +157,11 @@ public class EnhancedChunkingService {
 
     private void logChunkInfo(List<Map<String, Object>> chunks) {
         logger.info("총 청크 개수: {}", chunks.size());
+        int k =0;
         for (int i = 0; i < chunks.size(); i++) {
             String chunkContent = (String) chunks.get(i).get("chunk");
             logger.info("청크 {}: 크기 = {}", i + 1, chunkContent.length());
+            k=k+chunkContent.length();
         }
     }
 
